@@ -1,0 +1,18 @@
+version: "3.3"  
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG
+      - SECRET_KEY
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
+      - DB_HOST
+      - DB_PORT
+    volumes:
+      - .:/code
+    command: python manage.py runserver 0.0.0.0:8000

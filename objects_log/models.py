@@ -29,7 +29,7 @@ class Observer(models.Model):
 
 
 class ColorFilter(models.Model):
-    name = models.CharField(max_length=5, unique=True)
+    name = models.CharField(max_length=12, unique=True)
     note = models.TextField(max_length=511, null=True, blank=True)
     weight = models.IntegerField(
         default=0,
