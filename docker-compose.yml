@@ -15,6 +15,7 @@ services:
       - DB_PORT
     volumes:
       - .:/code
+    restart: always
     command: python manage.py runserver 0.0.0.0:8000 --insecure
     
     
