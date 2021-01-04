@@ -14,8 +14,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
+    path('grappelli/', include('grappelli.urls')), # grappelli URLS
+    path('grappelli-docs/', include('grappelli.urls_docs')), # grappelli docs URLS
     path('admin/', admin.site.urls),
 ]
+
+admin.autodiscover()
+admin.site.enable_nav_sidebar = False
