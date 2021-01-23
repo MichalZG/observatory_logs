@@ -1,6 +1,12 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+
+class Night(models.Model):
+    date = models.DateField()
+    
+
+
 class Target(models.Model):
     datetime_start = models.DateTimeField()
     datetime_end = models.DateTimeField()
