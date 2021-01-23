@@ -1,15 +1,26 @@
 from django.db import models
+from django.apps import apps
 from django.core.validators import MaxValueValidator, MinValueValidator
-
+from django.utils import timezone
+import datetime as dt
 
 class Night(models.Model):
-    date = models.DateField()
-    
+    date = models.DateField(unique=True)
+    note = models.TextField(max_length=511, null=True, blank=True)
+    tags = models.ManyToManyField('objects_log.Tag', blank=True)
 
+    def __str__(self):
+        return self.date.strftime('%d-%m-%Y')
+        
+
+def auto_end_datetime():
+    return timezone.now() + timezone.timedelta(hours=1)
 
 class Target(models.Model):
-    datetime_start = models.DateTimeField()
-    datetime_end = models.DateTimeField()
+    datetime_start = models.DateTimeField(default=timezone.now)
+    datetime_end = models.DateTimeField(default=auto_end_datetime)
+    night = models.ForeignKey('objects_log.Night',
+        blank=True, on_delete=models.CASCADE)
     observer = models.CharField(max_length=254, null=True, blank=True)
     name = models.CharField(max_length=257)
     ra = models.DecimalField(max_digits=12, decimal_places=10,
@@ -31,6 +42,16 @@ class Target(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+    def save(self, *args, **kwargs):
+        object_night = (self.datetime_start - dt.timedelta(hours=12)).date()
+        night, _ = apps.get_model(
+            'objects_log.Night').objects.get_or_create(
+                date=object_night,
+        )
+        self.night = night
+        
+        return super().save(*args, **kwargs)
 
 
 class Observer(models.Model):
