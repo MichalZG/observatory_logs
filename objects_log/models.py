@@ -2,6 +2,8 @@ from django.db import models
 from django.apps import apps
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
+
+from jdcal import gcal2jd
 import datetime as dt
 
 class Night(models.Model):
@@ -19,6 +21,8 @@ def auto_end_datetime():
 class Target(models.Model):
     datetime_start = models.DateTimeField(default=timezone.now)
     datetime_end = models.DateTimeField(default=auto_end_datetime)
+    jd_start = models.DecimalField(
+        max_digits=13, decimal_places=6, verbose_name='JD', blank=True)
     night = models.ForeignKey('objects_log.Night',
         blank=True, on_delete=models.CASCADE)
     observer = models.CharField(max_length=254, null=True, blank=True)
@@ -43,14 +47,30 @@ class Target(models.Model):
     def __str__(self):
         return f'{self.name}'
 
-    def save(self, *args, **kwargs):
+    def get_jd_start(self, dt_value):
+        full_days = sum(gcal2jd(
+            dt_value.year, dt_value.month, dt_value.day
+            ))
+        jd = full_days \
+            + dt_value.hour / 24 \
+            + dt_value.minute / 24 / 60 \
+            + dt_value.second / 24 / 60 / 60
+
+        return jd
+    
+    def get_night(self):
         object_night = (self.datetime_start - dt.timedelta(hours=12)).date()
         night, _ = apps.get_model(
             'objects_log.Night').objects.get_or_create(
                 date=object_night,
         )
-        self.night = night
-        
+
+        return night
+
+    def save(self, *args, **kwargs):
+        self.night = self.get_night()
+        self.jd_start = self.get_jd_start(self.datetime_start)
+
         return super().save(*args, **kwargs)
 
 
