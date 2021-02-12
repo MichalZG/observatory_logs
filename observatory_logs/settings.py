@@ -40,6 +40,7 @@ if os.environ.get('DEBUG', 'False') == 'True':
 INSTALLED_APPS = [
     'grappelli',
     'objects_log.apps.ObjectsLogConfig',
+    'rest_framework',
     # 'bootstrap_admin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -101,6 +102,16 @@ DATABASES = {
         'PORT': get_env_value('DB_PORT'),
     }
 }
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

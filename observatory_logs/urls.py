@@ -1,3 +1,6 @@
+from django.urls import path
+from objects_log import views
+
 """observatory_logs URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -20,6 +23,8 @@ urlpatterns = [
     path('grappelli/', include('grappelli.urls')), # grappelli URLS
     path('grappelli-docs/', include('grappelli.urls_docs')), # grappelli docs URLS
     path('admin/', admin.site.urls),
+    path('api-auth/', include('rest_framework.urls')),
+    path('', include('objects_log.urls')),
 ]
 
 admin.autodiscover()

@@ -32,7 +32,8 @@ class Target(models.Model):
     dec = models.DecimalField(max_digits=12, decimal_places=10,
         null=True, blank=True, help_text='DEC in decimal degree')
     note = models.TextField(max_length=511, null=True, blank=True)
-    telescope = models.ForeignKey('objects_log.Telescope', on_delete=models.PROTECT)
+    telescope = models.ForeignKey('objects_log.Telescope',
+        on_delete=models.PROTECT)
     program = models.ForeignKey('objects_log.Program', null=True, 
         blank=True, on_delete=models.SET_NULL)
     colorfilters = models.ManyToManyField('objects_log.ColorFilter')
