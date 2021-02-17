@@ -6,6 +6,7 @@ from rest_framework.validators import UniqueTogetherValidator
 def auto_end_datetime():
     return timezone.now() + timezone.timedelta(hours=1)
 
+
 class ColorFilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColorFilter
@@ -22,9 +23,10 @@ class TargetSerializer(serializers.ModelSerializer):
     telescope = serializers.SlugRelatedField(
         many=False, read_only=False, queryset=Telescope.objects.all(),
         slug_field='name')
-    # colorfilters = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    # telescope = TelescopeSerializer(many=False, read_only=True)
-    colorfilters = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    colorfilters = serializers.SlugRelatedField(
+        many=True, read_only=False, queryset=ColorFilter.objects.all(),
+        slug_field='name'
+    )
 
     class Meta:
         model = Target

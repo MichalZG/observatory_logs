@@ -4,3 +4,4 @@ django-grappelli
 djangorestframework
 markdown      
 django-filter 
+jdcal
