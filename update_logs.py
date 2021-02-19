@@ -8,7 +8,7 @@ from pprint import pprint as pp
 import argparse
 import requests
 import json
-from dateutil import parser as dateparser
+
 
 # DATA
 ROOT_DIR = "/home/pi/GoogleDrive/mydrive/Data/astro/suhora_logs/logs_test"
@@ -148,6 +148,8 @@ def get_info_from_db(args):
 
 def validate_datetime(datetime_start):
     try:
+        datetime_start = dt.datetime.strptime(
+            datetime_start, "%Y-%m-%dT%H:%M:%S")
         datetime_start = dateparser.isoparse(datetime_start)
     except ValueError as e:
         raise Exception(e, 'Wrong datetime format')
