@@ -148,8 +148,8 @@ def validate_data_dir(data_dir):
 
 def process(data_dir, datetime_start, telescope_name):
     dirs_to_walk = sorted(get_dirs_to_walk(data_dir, datetime_start))
-    data_to_send = []
     for _dir in dirs_to_walk:
+        data_to_send = []
         print('#'*9)
         pp(_dir)
 
@@ -162,7 +162,7 @@ def process(data_dir, datetime_start, telescope_name):
         pp(grouped_folder_data)
         print('#'*9)
 
-    send_data(data_to_send)
+        send_data(data_to_send)
 
 
 if __name__ == '__main__':
