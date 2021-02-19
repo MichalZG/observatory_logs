@@ -4,8 +4,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 
-from objects_log.models import Target
+from objects_log.models import Target, Telescope
 from objects_log.serializers import TargetSerializer, TargetStatsSerializer
+
+from django.core.exceptions import ObjectDoesNotExist
 
 
 @api_view(['GET', 'POST'])
@@ -50,9 +52,23 @@ def target_detail(request, pk):
 
 @api_view(['GET'])
 @permission_classes((permissions.IsAuthenticated,))
-def target_stats(request):
+def targets_stats(request):
 
     if request.method == 'GET':
         targets = Target.objects.all()
+        serializer = TargetStatsSerializer(targets)
+        return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def targets_stats_telescope(request, tname):
+
+    if request.method == 'GET':
+        try:
+            telescope = Telescope.objects.get(name=tname)
+        except ObjectDoesNotExist:
+            return Response(f'The {tname} telescope was not found in the DB',
+                status=status.HTTP_400_BAD_REQUEST)
+        targets = Target.objects.filter(telescope=telescope)
         serializer = TargetStatsSerializer(targets)
         return Response(serializer.data)

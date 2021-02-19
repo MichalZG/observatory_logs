@@ -63,8 +63,14 @@ class TargetSerializer(serializers.ModelSerializer):
 
 class TargetStatsSerializer(serializers.BaseSerializer):
     def to_representation(self, instance):
-        last_datetime = instance.order_by(
-            '-datetime_start').first().datetime_start
+        last_instance = instance.order_by(
+            '-datetime_start').first()
+
+        if not last_instance:
+            last_datetime = None
+        else:
+            last_datetime = last_instance.datetime_start
+            
         counts = instance.count()
 
         return {
