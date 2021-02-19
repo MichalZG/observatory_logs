@@ -31,13 +31,14 @@ class Target(models.Model):
         null=True, blank=True, help_text='RA in decimal hours')
     dec = models.DecimalField(max_digits=12, decimal_places=10,
         null=True, blank=True, help_text='DEC in decimal degree')
-    note = models.TextField(max_length=511, null=True, blank=True)
-    telescope = models.ForeignKey('objects_log.Telescope', on_delete=models.PROTECT)
+    note = models.TextField(max_length=511, null=True, blank=True, default='')
+    telescope = models.ForeignKey('objects_log.Telescope',
+        on_delete=models.PROTECT)
     program = models.ForeignKey('objects_log.Program', null=True, 
         blank=True, on_delete=models.SET_NULL)
     colorfilters = models.ManyToManyField('objects_log.ColorFilter')
     tags = models.ManyToManyField('objects_log.Tag', blank=True)
-    total_exposure_time = models.DecimalField(max_digits=5, decimal_places=3,
+    total_exposure_time = models.DecimalField(max_digits=7, decimal_places=2,
         null=True, blank=True, help_text='Total exposure time in hours')
     number_of_frames = models.IntegerField(blank=True, null=True)
 
@@ -70,6 +71,15 @@ class Target(models.Model):
     def save(self, *args, **kwargs):
         self.night = self.get_night()
         self.jd_start = self.get_jd_start(self.datetime_start)
+
+        if not self.program:
+            last_program = None
+            prev_entries = apps.get_model(
+                'objects_log.target').objects.filter(
+                    name=self.name).order_by("-datetime_start")
+            if prev_entries:
+                last_program = prev_entries[0].program
+            self.program = last_program
 
         return super().save(*args, **kwargs)
 

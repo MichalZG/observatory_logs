@@ -1,3 +1,7 @@
 Django==3.1.4
 psycopg2-binary
 django-grappelli
+djangorestframework
+markdown      
+django-filter 
+jdcal

@@ -69,20 +69,22 @@ class TargetAdmin(admin.ModelAdmin):
         return format_html(f'<p>{symbols_html}</p>')
 
     def note_display(self, obj):
-        if len(obj.note) > NOTE_DISPLAY_LENGHT:
+        if obj.note and len(obj.note) > NOTE_DISPLAY_LENGHT:
             return f'{obj.note[:NOTE_DISPLAY_LENGHT]}...'
         return obj.note
 
     def total_exposure_time_display(self, obj):
+        if obj.total_exposure_time is not None:
+            return round(obj.total_exposure_time / 60)
         return obj.total_exposure_time
 
     list_display = ('name', 'datetime_start', 'jd_start', 'observer',
-        'colorfilters_display', 'program', 'telescope', 'total_exposure_time_display',
-        'note_display', 'tags_display')
+        'colorfilters_display', 'program', 'telescope', 
+        'total_exposure_time_display', 'note_display', 'tags_display')
 
     list_editable = ('program',)
 
-    total_exposure_time_display.short_description = 'Exp [h]'
+    total_exposure_time_display.short_description = 'Exp [min]'
     note_display.short_description = 'Note'
     colorfilters_display.short_description = 'Filters'
     tags_display.short_description = 'Tags'
