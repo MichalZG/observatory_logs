@@ -108,23 +108,26 @@ def send_data(data_to_send):
     for folder_ds in data_to_send:
         for ds in folder_ds:
             try:
+                logger.info(f'Sending data: {ds}')
                 response = requests.post(
                     UPLOAD_URL, auth=(DB_USER, DB_PASSWORD),
                         data=json.dumps(ds),
                         headers={'content-type': 'application/json'})
             except (requests.ConnectionError, requests.Timeout) as exception:
+                logger.error('No DB connection')
                 raise Exception('No connection to DB!')
-            print(response.ok)
-            print(response.content)
-
+            
+            if not response.ok:
+                logger.error(response.content)
 def get_info_from_db(args):
     try:
         telescope_url = STATS_URL + args.telescope_name
         response = requests.get(telescope_url, timeout=TIMEOUT,
                                 auth=(DB_USER, DB_PASSWORD),
                     headers={'content-type': 'application/json'})
-        print('connected')
+        logger.info('DB connection ready')
     except (requests.ConnectionError, requests.Timeout) as exception:
+        logger.error('No DB connection')
         raise Exception('No connection to DB!')
 
     if not response.ok:
@@ -149,9 +152,8 @@ def validate_data_dir(data_dir):
 def process(data_dir, datetime_start, telescope_name):
     dirs_to_walk = sorted(get_dirs_to_walk(data_dir, datetime_start))
     for _dir in dirs_to_walk:
+        logger.info(f'Processed directory: {_dir}')
         data_to_send = []
-        print('#'*9)
-        pp(_dir)
 
         folder_files = get_files(_dir)
         folder_data = get_folder_data(folder_files)
@@ -159,8 +161,6 @@ def process(data_dir, datetime_start, telescope_name):
             folder_data, telescope_name
         )
         data_to_send.append(grouped_folder_data)
-        pp(grouped_folder_data)
-        print('#'*9)
 
         send_data(data_to_send)
 

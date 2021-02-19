@@ -8,7 +8,9 @@ from objects_log.models import Target, Telescope
 from objects_log.serializers import TargetSerializer, TargetStatsSerializer
 
 from django.core.exceptions import ObjectDoesNotExist
+import logging
 
+logger = logging.getLogger('django')
 
 @api_view(['GET', 'POST'])
 @permission_classes((permissions.IsAuthenticated,))
@@ -20,11 +22,11 @@ def target_list(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        print(request.data)
         serializer = TargetSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error(f"{request.data}\n {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
