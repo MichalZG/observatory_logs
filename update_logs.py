@@ -154,6 +154,7 @@ def process(data_dir, datetime_start, telescope_name):
     dirs_to_walk = sorted(get_dirs_to_walk(data_dir, datetime_start))
     for _dir in dirs_to_walk:
         logger.info(f'Processed directory: {_dir}')
+        print(f'Processed directory: {_dir}')
         data_to_send = []
 
         folder_files = get_files(_dir)
@@ -196,5 +197,9 @@ if __name__ == '__main__':
 
     datetime_start_parsed = validate_datetime(datetime_start)
     data_dir = validate_data_dir(args.data_dir)
-    print('process')
-    process(data_dir, datetime_start_parsed, args.telescope_name)
+    print('Process start')
+    try:
+        process(data_dir, datetime_start_parsed, args.telescope_name)
+    except Exception as e:
+        logger.error(f'Big Error!: {e}')
+        raise(e)
