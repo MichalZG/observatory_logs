@@ -82,7 +82,7 @@ class TargetAdmin(admin.ModelAdmin):
         'colorfilters_display', 'program', 'telescope', 
         'total_exposure_time_display', 'note_display', 'tags_display')
 
-    # list_editable = ('program',)
+    list_editable = ('program',)
 
     total_exposure_time_display.short_description = 'Exp [min]'
     note_display.short_description = 'Note'
