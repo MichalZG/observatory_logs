@@ -49,7 +49,7 @@ def get_folder_data(files_to_open):
     folder_data = []
     for f in files_to_open:
         with gzip.open(f, 'rb') as f_in:
-            hdr = dict(fits.getheader(f))
+            hdr = dict(fits.getheader(f, ignore_missing_end=True))
             
             obs_datetime = dt.datetime.strptime(
                 hdr['DATE-OBS'] + 'T' + hdr['TIME-OBS'],
