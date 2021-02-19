@@ -8,6 +8,8 @@ from pprint import pprint as pp
 import argparse
 import requests
 import json
+import dateutil.parser as dateparser
+
 from update_config import *
 
 
@@ -137,8 +139,7 @@ def get_info_from_db(args):
 
 def validate_datetime(datetime_start):
     try:
-        datetime_start = dt.datetime.strptime(
-            datetime_start, "%Y-%m-%dT%H:%M:%S")
+        datetime_start = dateparser.parse(datetime_start)
     except ValueError as e:
         raise Exception(e, 'Wrong datetime format')
     

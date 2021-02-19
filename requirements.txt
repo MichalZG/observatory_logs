@@ -7,3 +7,4 @@ django-filter
 jdcal
 astropy
 requests
+python-dateutil
