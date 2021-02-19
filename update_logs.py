@@ -54,7 +54,7 @@ def get_folder_data(files_to_open):
             except OSError as e:
                 logger.warning(f'HDR problem in file: {f} - {e}')
                 continue
-            
+
             obs_datetime = dt.datetime.strptime(
                 hdr['DATE-OBS'] + 'T' + hdr['TIME-OBS'],
                 '%Y-%m-%dT%H:%M:%S.%f').isoformat()
@@ -114,7 +114,7 @@ def send_data(data_to_send):
     for folder_ds in data_to_send:
         for ds in folder_ds:
             try:
-                logger.info(f'Sending data: {ds}')
+                logger.debug(f'Sending data: {ds}')
                 response = requests.post(
                     UPLOAD_URL, auth=(DB_USER, DB_PASSWORD),
                         data=json.dumps(ds),
@@ -157,8 +157,8 @@ def validate_data_dir(data_dir):
 def process(data_dir, datetime_start, telescope_name):
     dirs_to_walk = sorted(get_dirs_to_walk(data_dir, datetime_start))
     for _dir in dirs_to_walk:
-        logger.info(f'Processed directory: {_dir}')
-        print(f'Processed directory: {_dir}')
+        logger.info(f'Processing directory: {_dir}')
+        print(f'Processing directory: {_dir}')
         data_to_send = []
 
         folder_files = get_files(_dir)
