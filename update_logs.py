@@ -8,22 +8,8 @@ from pprint import pprint as pp
 import argparse
 import requests
 import json
+from update_config import *
 
-
-# DATA
-ROOT_DIR = "/home/pi/GoogleDrive/mydrive/Data/astro/suhora_logs/logs_test"
-DATE_REGEX = '^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$'
-ALLOWED_EXT = ['.gz', '.bz2']
-# HDR
-FORBIDDEN_HDR_KEYS = ['HISTORY', 'COMMENT']
-# DB
-STATS_URL = 'http://127.0.0.1:8000/stats/targets/'
-UPLOAD_URL = 'http://127.0.0.1:8000/targets/'
-DB_USER = 'admin'
-DB_PASSWORD = 'haslobrzmi'
-TIMEOUT = 5 
-
-ZERO_DATETIME = '1900-01-01T12:00:00'
 
 def get_dirs_to_walk(data_dir, datetime_start):
     folders_in_root = os.listdir(data_dir)
@@ -150,7 +136,6 @@ def validate_datetime(datetime_start):
     try:
         datetime_start = dt.datetime.strptime(
             datetime_start, "%Y-%m-%dT%H:%M:%S")
-        datetime_start = dateparser.isoparse(datetime_start)
     except ValueError as e:
         raise Exception(e, 'Wrong datetime format')
     
