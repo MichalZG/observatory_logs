@@ -100,7 +100,7 @@ def get_grouped_folder_data(folder_data, telescope_name):
             target['telescope'] = telescope_name
 
         target['number_of_frames'] += 1    
-        target['total_exposure_time'] += float(frame.get('exptime', 0))
+        target['total_exposure_time'] += round(float(frame.get('exptime', 0)), 2)
         if frame['color_filter'] not in target['colorfilters']:
             target['colorfilters'].append(frame['color_filter'])
 
