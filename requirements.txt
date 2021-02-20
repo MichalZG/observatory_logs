@@ -8,3 +8,4 @@ jdcal
 astropy
 requests
 python-dateutil
+django-cors-headers

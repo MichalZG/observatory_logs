@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'grappelli',
     'objects_log.apps.ObjectsLogConfig',
     'rest_framework',
+    'corsheaders',
     # 'bootstrap_admin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -58,9 +59,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'observatory_logs.urls'
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 TEMPLATES = [
     {
