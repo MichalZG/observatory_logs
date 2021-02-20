@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'objects_log.apps.ObjectsLogConfig',
     'rest_framework',
     'corsheaders',
-    'bootstrap_admin',
+    # 'bootstrap_admin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
