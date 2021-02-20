@@ -133,7 +133,7 @@ def send_data(data_to_send):
                 raise Exception('No connection to DB!')
             
             if not response.ok:
-                logger.error(response.content)
+                logger.error(f'{response.content}\n {ds}')
 def get_info_from_db(args):
     try:
         telescope_url = STATS_URL + args.telescope_name
