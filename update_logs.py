@@ -48,30 +48,37 @@ def get_files(_dir):
 def get_folder_data(files_to_open):
     folder_data = []
     for f in files_to_open:
-        with gzip.open(f, 'rb') as f_in:
-            try:
-                hdr = dict(fits.getheader(f, ignore_missing_end=True))
-            except OSError as e:
-                logger.warning(f'HDR problem in file: {f} - {e}')
-                continue
+        try:
+            f_in = gzip.open(f, 'rb')
+        except OSError as e:
+            logger.error(e)
+            continue
+            # with gzip.open(f, 'rb') as f_in:
+        else:
+            with f:        
+                try:
+                    hdr = dict(fits.getheader(f, ignore_missing_end=True))
+                except OSError as e:
+                    logger.warning(f'HDR problem in file: {f} - {e}')
+                    continue
 
-            obs_datetime = dt.datetime.strptime(
-                hdr['DATE-OBS'] + 'T' + hdr['TIME-OBS'],
-                '%Y-%m-%dT%H:%M:%S.%f').isoformat()
-            
-            object_name = hdr['OBJECT']
-            observer = hdr['OBSERVER']
-            color_filter = hdr['FILTER']
-            exptime = hdr['EXPTIME']
-            
-        row = {
-            'obs_datetime': obs_datetime,
-            'object_name': object_name,
-            'observer': observer,
-            'color_filter': color_filter,
-            'exptime': exptime,
-        }
-        folder_data.append(row)
+                obs_datetime = dt.datetime.strptime(
+                    hdr['DATE-OBS'] + 'T' + hdr['TIME-OBS'],
+                    '%Y-%m-%dT%H:%M:%S.%f').isoformat()
+                
+                object_name = hdr['OBJECT']
+                observer = hdr['OBSERVER']
+                color_filter = hdr['FILTER']
+                exptime = hdr['EXPTIME']
+                
+            row = {
+                'obs_datetime': obs_datetime,
+                'object_name': object_name,
+                'observer': observer,
+                'color_filter': color_filter,
+                'exptime': exptime,
+            }
+            folder_data.append(row)
         
     folder_data = sorted(folder_data, key=lambda x: x['obs_datetime'])
     
