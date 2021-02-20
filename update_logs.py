@@ -55,7 +55,7 @@ def get_folder_data(files_to_open):
             continue
             # with gzip.open(f, 'rb') as f_in:
         else:
-            with f:        
+            with f_in:        
                 try:
                     hdr = dict(fits.getheader(f, ignore_missing_end=True))
                 except OSError as e:
