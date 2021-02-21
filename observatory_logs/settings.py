@@ -195,3 +195,6 @@ USE_TZ = True
 
 
 
+TEMPLATE_DIRS = (
+     os.path.join(BASE_DIR, 'objects_log/templates/'),
+)

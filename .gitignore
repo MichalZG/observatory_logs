@@ -131,3 +131,4 @@ dmypy.json
 observatory_logs/static/
 update_logs.py
 update_config.py
+run.sh
