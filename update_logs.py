@@ -88,55 +88,56 @@ def get_folder_data(files_to_open):
 
 
 def get_grouped_folder_data(folder_data, telescope_name):
-    results = []
+    results = {}
     target = {}
     n_frames = 0
     prev_name = None
 
     for frame in folder_data:
-        if frame['object_name'] != prev_name or frame == folder_data[-1]:
-            n_frames = 0
-            if target:
-                target['datetime_end'] = frame['obs_datetime']
-                target['colorfilters'] = [
-                    {'name': c} for c in target['colorfilters']
+        object_name = frame['object_name']
+        if object_name not in results:
+            object_dict = {
+                'name': frame['object_name'],
+                'datetime_start': frame['obs_datetime'],
+                'observer': frame['observer'],
+                'colorfilters': [frame['color_filter']],
+                'total_exposure_time': 0,
+                'number_of_frames': 0,
+                'telescope': telescope_name,
+            }
+            results[object_name] = object_dict
+        object_dict['datetime_end'] = frame['obs_datetime']
+        object_dict['number_of_frames'] += 1
+        object_dict['total_exposure_time'] += float(frame.get('exptime', 0))
+
+    for object_name in results.keys():
+        object_dict = results[object_name]
+        object_dict['total_exposure_time'] = round(
+                    object_dict['total_exposure_time'], 2)
+        object_dict['colorfilters'] = [
+                    {'name': c} for c in set(object_dict['colorfilters'])
                 ]
-                target['total_exposure_time'] = round(
-                    target['total_exposure_time'], 2)
-                results.append(target)
-            target = {}
-            prev_name = frame['object_name']
-            target['name'] = frame['object_name']
-            target['datetime_start'] = frame['obs_datetime']
-            target['observer'] = frame['observer']
-            target['colorfilters'] = []
-            target['total_exposure_time'] = 0
-            target['number_of_frames'] = 0
-            target['telescope'] = telescope_name
 
-        target['number_of_frames'] += 1    
-        target['total_exposure_time'] += float(frame.get('exptime', 0))
-        if frame['color_filter'] not in target['colorfilters']:
-            target['colorfilters'].append(frame['color_filter'])
-
-    logger.info(f'Grouped data: {results}')
     return results
 
+
 def send_data(data_to_send):
-    for folder_ds in data_to_send:
-        for ds in folder_ds:
+    for folder_results in data_to_send:
+        for _, target_data in folder_results.items():
             try:
-                logger.debug(f'Sending data: {ds}')
+                logger.debug(f'Sending data: {target_data}')
                 response = requests.post(
                     UPLOAD_URL, auth=(DB_USER, DB_PASSWORD),
-                        data=json.dumps(ds),
+                        data=json.dumps(target_data),
                         headers={'content-type': 'application/json'})
             except (requests.ConnectionError, requests.Timeout) as exception:
                 logger.error('No DB connection')
                 raise Exception('No connection to DB!')
             
             if not response.ok:
-                logger.error(f'{response.content}\n {ds}')
+                logger.error(f'{response.content}\n {target_data}')
+
+
 def get_info_from_db(args):
     try:
         telescope_url = STATS_URL + args.telescope_name
