@@ -118,7 +118,7 @@ def get_grouped_folder_data(folder_data, telescope_name):
         target['total_exposure_time'] += float(frame.get('exptime', 0))
         if frame['color_filter'] not in target['colorfilters']:
             target['colorfilters'].append(frame['color_filter'])
-
+    logger.debug(f'Grouped data: {result}')
     return results
 
 def send_data(data_to_send):
@@ -173,15 +173,11 @@ def process(data_dir, datetime_start, telescope_name):
         data_to_send = []
 
         folder_files = get_files(_dir)
-        logger.debug(f'Folder files: {folder_files}')
         folder_data = get_folder_data(folder_files)
-        logger.debug(f'Folder data: {folder_data}')
         grouped_folder_data = get_grouped_folder_data(
             folder_data, telescope_name
         )
-        logger.debug(f'Grouped folder data: {grouped_folder_data}')
         data_to_send.append(grouped_folder_data)
-        logger.debug(f'Data to send: {data_to_send}')
         send_data(data_to_send)
 
 
