@@ -94,7 +94,7 @@ def get_grouped_folder_data(folder_data, telescope_name):
     prev_name = None
 
     for frame in folder_data:
-        object_name = frame['object_name'].strip()
+        object_name = str(frame['object_name']).strip()
         if object_name not in results:
             object_dict = {
                 'name': object_name,
