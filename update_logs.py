@@ -94,18 +94,19 @@ def get_grouped_folder_data(folder_data, telescope_name):
     prev_name = None
 
     for frame in folder_data:
-        object_name = frame['object_name']
+        object_name = frame['object_name'].strip()
         if object_name not in results:
             object_dict = {
-                'name': frame['object_name'],
+                'name': object_name,
                 'datetime_start': frame['obs_datetime'],
                 'observer': frame['observer'],
-                'colorfilters': [frame['color_filter']],
+                'colorfilters': [],
                 'total_exposure_time': 0,
                 'number_of_frames': 0,
                 'telescope': telescope_name,
             }
             results[object_name] = object_dict
+        object_dict['colorfilters'].append(frame['color_filter'])
         object_dict['datetime_end'] = frame['obs_datetime']
         object_dict['number_of_frames'] += 1
         object_dict['total_exposure_time'] += float(frame.get('exptime', 0))
@@ -130,9 +131,9 @@ def send_data(data_to_send):
                     UPLOAD_URL, auth=(DB_USER, DB_PASSWORD),
                         data=json.dumps(target_data),
                         headers={'content-type': 'application/json'})
-            except (requests.ConnectionError, requests.Timeout) as exception:
-                logger.error('No DB connection')
-                raise Exception('No connection to DB!')
+            except (requests.ConnectionError, requests.Timeout) as e:
+                logger.error(f'No DB connection - {e}')
+                raise Exception(f'No connection to DB! - {e}')
             
             if not response.ok:
                 logger.error(f'{response.content}\n {target_data}')
