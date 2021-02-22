@@ -47,6 +47,7 @@ def get_files(_dir):
 
 def get_folder_data(files_to_open):
     folder_data = []
+    logger.debug(files_to_open)
     for f in files_to_open:
         try:
             f_in = gzip.open(f, 'rb')
@@ -78,6 +79,7 @@ def get_folder_data(files_to_open):
                 'color_filter': color_filter,
                 'exptime': exptime,
             }
+            logger.debug(f'data row: {row}')
             folder_data.append(row)
         
     folder_data = sorted(folder_data, key=lambda x: x['obs_datetime'])
