@@ -94,7 +94,7 @@ def get_grouped_folder_data(folder_data, telescope_name):
     prev_name = None
 
     for frame in folder_data:
-        if frame['object_name'] != prev_name:
+        if frame['object_name'] != prev_name or frame == folder_data[-1]:
             n_frames = 0
             if target:
                 target['datetime_end'] = frame['obs_datetime']
