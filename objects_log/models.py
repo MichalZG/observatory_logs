@@ -11,6 +11,9 @@ class Night(models.Model):
     note = models.TextField(max_length=511, null=True, blank=True)
     tags = models.ManyToManyField('objects_log.Tag', blank=True)
 
+    class Meta:
+        ordering = ('-date',)
+
     def __str__(self):
         return self.date.strftime('%d-%m-%Y')
         

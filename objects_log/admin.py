@@ -5,6 +5,7 @@ from django.forms import TextInput, Textarea
 from django.conf.locale.en import formats as en_formats
 from django.conf.locale.pl import formats as pl_formats
 from django.utils.html import format_html
+from django.db.models import Q, Sum
 
 en_formats.DATETIME_FORMAT = "d-m-y H:i:s"
 pl_formats.DATETIME_FORMAT = "d-m-y H:i:s"
@@ -29,6 +30,24 @@ class TargetInline(admin.TabularInline):
 @admin.register(Night)
 class NightAdmin(admin.ModelAdmin):
 
+    def observers_display(self, obj):
+        targets = obj.target_set.all()
+        if targets:
+            observers = list(set(
+                targets.values_list('observer', flat=True).distinct()
+            ))
+            return '; '.join(observers)
+        return None
+
+    def on_target_display(self, obj):
+        targets = obj.target_set.exclude(Q(name__in=['bias', 'dark', 'flat']))
+        if targets:
+            total_time_s = targets.aggregate(
+                Sum('total_exposure_time')
+            ).get('total_exposure_time__sum')
+            return round(float(total_time_s) / 60. / 60., 1)
+        return None
+
     def tags_display(self, obj):
         symbols_html = ''.join([f'&#{t.symbol};' for t in obj.tags.all()])
         return format_html(f'<p>{symbols_html}</p>')
@@ -38,7 +57,10 @@ class NightAdmin(admin.ModelAdmin):
             return f'{obj.note[:NOTE_DISPLAY_LENGHT]}...'
         return obj.note
     
-    list_display = ('date', 'tags_display', 'note_display')
+    list_display = (
+        'date', 'observers_display', 'on_target_display',
+        'tags_display', 'note_display'
+    )
 
     inlines = [
         TargetInline,
@@ -51,6 +73,10 @@ class NightAdmin(admin.ModelAdmin):
         }
     ),)
 
+    observers_display.short_description = 'Observers'
+    on_target_display.short_description = 'On target [h]'
+    tags_display.short_description = 'Tags'
+    note_display.short_description = 'Note'
 
 @admin.register(Target)
 class TargetAdmin(admin.ModelAdmin):
@@ -83,14 +109,12 @@ class TargetAdmin(admin.ModelAdmin):
         'total_exposure_time_display', 'note_display', 'tags_display')
 
     list_editable = ('program',)
+    list_filter = ('program', 'tags', 'observer', 'colorfilters',)
 
     total_exposure_time_display.short_description = 'Exp [min]'
     note_display.short_description = 'Note'
     colorfilters_display.short_description = 'Filters'
     tags_display.short_description = 'Tags'
-
-
-    list_filter = ('program', 'tags', 'observer')
 
     # formfield_overrides = {
     #     models.CharField: {'widget': TextInput(attrs={'size':'10'})},
@@ -124,6 +148,6 @@ class TagAdmin(admin.ModelAdmin):
 # admin.site.register(Target, TargetAdmin)
 # admin.site.register(Tag)
 admin.site.register(Telescope)
-admin.site.register(Observer)
+# admin.site.register(Observer)
 admin.site.register(ColorFilter)
 admin.site.register(Program)
