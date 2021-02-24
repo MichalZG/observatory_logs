@@ -226,7 +226,7 @@ if __name__ == '__main__':
     datetime_start_parsed = validate_datetime(datetime_start)
 
     if args.datetime_end:
-        datetime_end_parsed = args.datetime_end
+        datetime_end = args.datetime_end
     else:
         datetime_end = INF_DATETIME
     datetime_end_parsed = validate_datetime(datetime_end)
