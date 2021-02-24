@@ -9,6 +9,7 @@ import argparse
 import requests
 import json
 import dateutil.parser as dateparser
+import csv 
 
 from update_config import *
 
@@ -50,7 +51,7 @@ def get_files(_dir):
     return files_to_open
 
 
-def get_folder_data(files_to_open):
+def get_folder_data(files_to_open, names_dict):
     folder_data = []
     logger.debug(files_to_open)
     for f in files_to_open:
@@ -73,6 +74,12 @@ def get_folder_data(files_to_open):
                     '%Y-%m-%dT%H:%M:%S.%f').isoformat()
                 
                 object_name = hdr['OBJECT']
+                if names_dict:
+                    correct_name = [
+                        k for k, v in names_dict.items() if object_name in v
+                    ]
+                    object_name = correct_name[0] if correct_name else object_name
+                print(object_name)
                 observer = hdr['OBSERVER']
                 color_filter = hdr['FILTER']
                 exptime = hdr['EXPTIME']
@@ -173,7 +180,20 @@ def validate_data_dir(data_dir):
         raise Exception('Wrong data dir')
     return data_dir
 
-def process(data_dir, datetime_start, datetime_end, telescope_name):
+def validate_names_file(names_path):
+    if not os.path.isfile(names_path):
+        raise Exception('Wrong names file')
+    names_dict = {}
+    try:
+        with open(names_path) as f:
+            _reader = csv.reader(f)
+            for row in _reader:
+                names_dict[row[0]] = row[1:]
+    except Exception as e:
+        raise Exception(f'Wrong names file - {e}')
+    return names_dict
+
+def process(data_dir, names_dict, datetime_start, datetime_end, telescope_name):
     dirs_to_walk = sorted(
         get_dirs_to_walk(data_dir, datetime_start, datetime_end)
     )
@@ -183,12 +203,12 @@ def process(data_dir, datetime_start, datetime_end, telescope_name):
         data_to_send = []
 
         folder_files = get_files(_dir)
-        folder_data = get_folder_data(folder_files)
+        folder_data = get_folder_data(folder_files, names_dict)
         grouped_folder_data = get_grouped_folder_data(
             folder_data, telescope_name
         )
         data_to_send.append(grouped_folder_data)
-        send_data(data_to_send)
+        # send_data(data_to_send)
 
 
 if __name__ == '__main__':
@@ -201,6 +221,10 @@ if __name__ == '__main__':
         "-d", "--data_dir", type=str, required=True,
         help="Data directory for telescope"
     )
+    parser.add_argument(
+        "-n", "--names_path", type=str, nargs='?', const='',
+        help="Path to csv file with names dictionary"
+    )       
     parser.add_argument(
         "-s", "--datetime_start", type=str, nargs='?', const='',
         help=("Where to start. If none, taken from database, \
@@ -232,10 +256,17 @@ if __name__ == '__main__':
     datetime_end_parsed = validate_datetime(datetime_end)
 
     data_dir = validate_data_dir(args.data_dir)
+
+    if args.names_path:
+        names_dict = validate_names_file(args.names_path)
+    else:
+        names_dict = None
+
     print('Process start')
     try:
         process(
             data_dir,
+            names_dict,
             datetime_start_parsed,
             datetime_end_parsed,
             args.telescope_name,
