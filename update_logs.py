@@ -13,19 +13,24 @@ import dateutil.parser as dateparser
 from update_config import *
 
 
-def get_dirs_to_walk(data_dir, datetime_start):
+def get_dirs_to_walk(data_dir, datetime_start, datatime_end):
     folders_in_root = os.listdir(data_dir)
 
     date_start = datetime_start.date()
     if datetime_start.hour >= 12:
         date_start = date_start + dt.timedelta(days=1)
-        
+    
+    date_end = datetime_end.date()
+    if datetime_end.hour >=12:
+        datetime_end = date_end + dt.timedelta(days=1)
+
     p = re.compile(DATE_REGEX) 
     
     dirs_to_walk = []
     for _d in os.listdir(data_dir):
         if (p.match(_d) and \
-                dt.datetime.strptime(_d, '%Y-%m-%d').date() >= date_start):
+            date_end >= dt.datetime.strptime(_d, '%Y-%m-%d').date() >= date_start
+           ):
             dirs_to_walk.append(os.path.join(data_dir, _d))
     return dirs_to_walk
 
@@ -155,21 +160,23 @@ def get_info_from_db(args):
 
     return json.loads(response.content)
 
-def validate_datetime(datetime_start):
+def validate_datetime(datetime_str):
     try:
-        datetime_start = dateparser.parse(datetime_start)
+        datetime_object = dateparser.parse(datetime_str)
     except ValueError as e:
         raise Exception(e, 'Wrong datetime format')
     
-    return datetime_start
+    return datetime_object
 
 def validate_data_dir(data_dir):
     if not data_dir or not os.path.isdir(data_dir):
         raise Exception('Wrong data dir')
     return data_dir
 
-def process(data_dir, datetime_start, telescope_name):
-    dirs_to_walk = sorted(get_dirs_to_walk(data_dir, datetime_start))
+def process(data_dir, datetime_start, datetime_end, telescope_name):
+    dirs_to_walk = sorted(
+        get_dirs_to_walk(data_dir, datetime_start, datetime_end)
+    )
     for _dir in dirs_to_walk:
         logger.info(f'Processing directory: {_dir}')
         print(f'Processing directory: {_dir}')
@@ -200,6 +207,11 @@ if __name__ == '__main__':
                if none form database start from year 1900. \
                Datetime must be in iso format e.g  2019-01-27T12:06:21")
     )
+    parser.add_argument(
+        "-e", "--datetime_end", type=str, nargs='?', const='',
+        help=("Where to end. If none, there is no end... \
+               Datetime must be in iso format e.g  2019-01-27T12:06:21")
+    )
     args = parser.parse_args()
 
     db_info = get_info_from_db(args)
@@ -211,12 +223,23 @@ if __name__ == '__main__':
             datetime_start = db_info['last_datetime']
         else:
             datetime_start = ZERO_DATETIME
-
     datetime_start_parsed = validate_datetime(datetime_start)
+
+    if args.datetime_end:
+        datetime_end_parsed = args.datetime_end
+    else:
+        datetime_end = INF_DATETIME
+    datetime_end_parsed = validate_datetime(datetime_end)
+
     data_dir = validate_data_dir(args.data_dir)
     print('Process start')
     try:
-        process(data_dir, datetime_start_parsed, args.telescope_name)
+        process(
+            data_dir,
+            datetime_start_parsed,
+            datetime_end_parsed,
+            args.telescope_name,
+        )
     except Exception as e:
         logger.error(f'Big Error!: {e}')
         raise(e)

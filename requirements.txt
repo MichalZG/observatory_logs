@@ -9,3 +9,6 @@ astropy
 requests
 python-dateutil
 django-cors-headers
+django-extensions
+jupyter
+ipython
