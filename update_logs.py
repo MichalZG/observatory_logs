@@ -79,7 +79,6 @@ def get_folder_data(files_to_open, names_dict):
                         k for k, v in names_dict.items() if object_name in v
                     ]
                     object_name = correct_name[0] if correct_name else object_name
-                print(object_name)
                 observer = hdr['OBSERVER']
                 color_filter = hdr['FILTER']
                 exptime = hdr['EXPTIME']
@@ -171,17 +170,20 @@ def validate_datetime(datetime_str):
     try:
         datetime_object = dateparser.parse(datetime_str)
     except ValueError as e:
+        logger.error(f'{e}')
         raise Exception(e, 'Wrong datetime format')
     
     return datetime_object
 
 def validate_data_dir(data_dir):
     if not data_dir or not os.path.isdir(data_dir):
+        logger.error(f'Wrong data dir')
         raise Exception('Wrong data dir')
     return data_dir
 
 def validate_names_file(names_path):
     if not os.path.isfile(names_path):
+        logger.error('Wrong names file')
         raise Exception('Wrong names file')
     names_dict = {}
     try:
@@ -190,6 +192,7 @@ def validate_names_file(names_path):
             for row in _reader:
                 names_dict[row[0]] = row[1:]
     except Exception as e:
+        logger.error(f'Wrong names file {e}')
         raise Exception(f'Wrong names file - {e}')
     return names_dict
 
@@ -208,7 +211,7 @@ def process(data_dir, names_dict, datetime_start, datetime_end, telescope_name):
             folder_data, telescope_name
         )
         data_to_send.append(grouped_folder_data)
-        # send_data(data_to_send)
+        send_data(data_to_send)
 
 
 if __name__ == '__main__':
@@ -263,6 +266,7 @@ if __name__ == '__main__':
         names_dict = None
 
     print('Process start')
+    logger.info(f'Process start - {dt.datetime.now().isoformat()}')
     try:
         process(
             data_dir,
