@@ -13,7 +13,7 @@ import dateutil.parser as dateparser
 from update_config import *
 
 
-def get_dirs_to_walk(data_dir, datetime_start, datatime_end):
+def get_dirs_to_walk(data_dir, datetime_start, datetime_end):
     folders_in_root = os.listdir(data_dir)
 
     date_start = datetime_start.date()
