@@ -22,7 +22,7 @@ def get_dirs_to_walk(data_dir, datetime_start, datatime_end):
     
     date_end = datetime_end.date()
     if datetime_end.hour >=12:
-        datetime_end = date_end + dt.timedelta(days=1)
+        date_end = date_end + dt.timedelta(days=1)
 
     p = re.compile(DATE_REGEX) 
     
