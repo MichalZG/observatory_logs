@@ -101,10 +101,13 @@ class ColorFilter(models.Model):
     weight = models.IntegerField(
         default=0,
         validators=[
-            MaxValueValidator(10),
+            MaxValueValidator(100),
             MinValueValidator(0)
         ], help_text='For display sorting purposes'
     )
+
+    class Meta:
+        ordering = ('-weight',)
 
     def __str__(self):
         return f'{self.name}'
@@ -143,10 +146,13 @@ class Tag(models.Model):
     weight = models.IntegerField(
         default=0,
         validators=[
-            MaxValueValidator(10),
+            MaxValueValidator(100),
             MinValueValidator(0)
         ], help_text='For display sorting purposes'
     )
+
+    class Meta:
+        ordering = ('-weight',)
 
     def __str__(self):
         return f'{self.name}'
