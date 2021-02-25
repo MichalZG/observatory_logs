@@ -275,7 +275,7 @@ if __name__ == '__main__':
             datetime_end_parsed,
             args.telescope_name,
         )
-    logger.info(f'Finished')
+        logger.info(f'Finished')
     except Exception as e:
         logger.error(f'Big Error!: {e}')
         raise(e)
