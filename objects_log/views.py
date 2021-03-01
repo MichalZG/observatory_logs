@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
+from rest_framework.pagination import PageNumberPagination
 
 from objects_log.models import Target, Telescope
 from objects_log.serializers import TargetSerializer, TargetStatsSerializer
@@ -12,14 +13,22 @@ import logging
 
 logger = logging.getLogger('django')
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 25
+    page_query_param = 'page'
+    page_size_query_param = 'per_page'
+    max_page_size = 100
+
 @api_view(['GET', 'POST'])
 @permission_classes((permissions.IsAuthenticated,))
 def target_list(request):
 
     if request.method == 'GET':
+        paginator = StandardResultsSetPagination()
         targets = Target.objects.all()
-        serializer = TargetSerializer(targets, many=True)
-        return Response(serializer.data)
+        result_page = paginator.paginate_queryset(targets, request)
+        serializer = TargetSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     elif request.method == 'POST':
         serializer = TargetSerializer(data=request.data)
