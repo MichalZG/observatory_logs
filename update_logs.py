@@ -117,6 +117,8 @@ def get_grouped_folder_data(folder_data, telescope_name):
                 'telescope': telescope_name,
             }
             results[object_name] = object_dict
+        else:
+            object_dict = results[object_name]
         object_dict['colorfilters'].append(frame['color_filter'])
         object_dict['datetime_end'] = frame['obs_datetime']
         object_dict['number_of_frames'] += 1
