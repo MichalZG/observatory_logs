@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_extensions',
+    'rangefilter',
+    'import_export',
     # 'bootstrap_admin',
     'django.contrib.admin',
     'django.contrib.auth',

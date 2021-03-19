@@ -6,6 +6,10 @@ from django.conf.locale.en import formats as en_formats
 from django.conf.locale.pl import formats as pl_formats
 from django.utils.html import format_html
 from django.db.models import Q, Sum
+from rangefilter.filter import DateRangeFilter
+from import_export.admin import ExportActionMixin
+from import_export import resources
+from import_export.fields import Field
 
 en_formats.DATETIME_FORMAT = "d-m-y H:i:s"
 pl_formats.DATETIME_FORMAT = "d-m-y H:i:s"
@@ -78,9 +82,42 @@ class NightAdmin(admin.ModelAdmin):
     tags_display.short_description = 'Tags'
     note_display.short_description = 'Note'
 
+
+class TargetResource(resources.ModelResource):
+    res_program = Field(column_name='program')
+    res_colorfilters = Field(column_name='color_filters')
+    res_tags = Field(column_name='tags')
+    res_total_exposure_time = Field(column_name='total_exposure_time_min')
+    telescope = Field(attribute='telescope__name', column_name='telescope')
+
+    class Meta:
+        model = Target
+        fields = ('datetime_start', 'datetime_end', 'jd_start', 'observer',
+                  'name', 'telescope', 'res_program', 'res_colorfilters', 
+                  'res_tags', 'res_total_exposure_time', 'number_of_frames')
+        export_order = fields
+
+    def dehydrate_res_program(self, target):
+        if not target.program:
+            return '---'
+        return target.program.name
+
+    def dehydrate_res_total_exposure_time(self, target):
+        if target.total_exposure_time is not None:
+            return round(target.total_exposure_time / 60, 1)
+        return target.total_exposure_time
+
+    def dehydrate_res_colorfilters(self, target):
+        return ', '.join([f.name for f in target.colorfilters.all()])
+
+    def dehydrate_res_tags(self, target):
+        return ', '.join([f.name for f in target.tags.all()])
+
+
 @admin.register(Target)
-class TargetAdmin(admin.ModelAdmin):
+class TargetAdmin(ExportActionMixin, admin.ModelAdmin):
     # change_list_template = "admin/change_list_filter_sidebar.html"
+    resource_class = TargetResource
     list_per_page = 40
     class Media:
         css = {
@@ -109,7 +146,7 @@ class TargetAdmin(admin.ModelAdmin):
         'total_exposure_time_display', 'note_display', 'tags_display')
 
     list_editable = ('program',)
-    list_filter = ('program', 'tags', 'observer', 'colorfilters',)
+    list_filter = ('program', 'tags', 'observer', 'colorfilters', ('datetime_start', DateRangeFilter))
 
     total_exposure_time_display.short_description = 'Exp [min]'
     note_display.short_description = 'Note'
