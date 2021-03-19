@@ -12,3 +12,5 @@ django-cors-headers
 django-extensions
 jupyter
 ipython
+django-admin-rangefilter
+django-import-export
