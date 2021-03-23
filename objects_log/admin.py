@@ -49,7 +49,8 @@ class NightAdmin(admin.ModelAdmin):
             total_time_s = targets.aggregate(
                 Sum('total_exposure_time')
             ).get('total_exposure_time__sum')
-            return round(float(total_time_s) / 60. / 60., 1)
+            if total_time_s:
+                return round(float(total_time_s) / 60. / 60., 1)
         return None
 
     def tags_display(self, obj):
@@ -146,7 +147,10 @@ class TargetAdmin(ExportActionMixin, admin.ModelAdmin):
         'total_exposure_time_display', 'note_display', 'tags_display')
 
     list_editable = ('program',)
-    list_filter = ('program', 'tags', 'observer', 'colorfilters', ('datetime_start', DateRangeFilter))
+    list_filter = (
+        'program', 'tags', 'observer', 'colorfilters',
+        'telescope', ('datetime_start', DateRangeFilter)
+    )
 
     total_exposure_time_display.short_description = 'Exp [min]'
     note_display.short_description = 'Note'
@@ -162,6 +166,7 @@ class TargetAdmin(ExportActionMixin, admin.ModelAdmin):
         (None, {
             'classes': ('extrapretty',),
             'fields': (('datetime_start', 'datetime_end'), 'name', 'program', 'telescope',
+                        'total_exposure_time', 
                         'observer', ('colorfilters', 'tags'), 'note')
         }),
     )

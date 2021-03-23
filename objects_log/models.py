@@ -42,7 +42,7 @@ class Target(models.Model):
     colorfilters = models.ManyToManyField('objects_log.ColorFilter')
     tags = models.ManyToManyField('objects_log.Tag', blank=True)
     total_exposure_time = models.DecimalField(max_digits=7, decimal_places=2,
-        null=True, blank=True, help_text='Total exposure time in hours')
+        null=True, blank=True, help_text='Total exposure time in seconds')
     number_of_frames = models.IntegerField(blank=True, null=True)
 
     class Meta:
