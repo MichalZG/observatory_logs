@@ -47,17 +47,34 @@ class TargetSerializer(serializers.ModelSerializer):
             )
         ]
 
-    def create(self, validated_data):
+    
+    def add_colorfilters(target, validated_data):
         colorfilters_data = validated_data.pop('colorfilters')
-        # telescope_data = validated_data.pop('telescope') 
-
-        target = Target.objects.create(**validated_data)
         if colorfilters_data:
             for c_filter_data in colorfilters_data:
                 c_filter, _ = ColorFilter.objects.get_or_create(
                     **c_filter_data
                 )
                 target.colorfilters.add(c_filter)
+            return True
+        return False
+
+    def add_observers(target, validated_data):
+        observers_data = validated_data.pop('observers')
+        if observers_data:
+            for o_data in observers_data:
+                observer, _ = Observer.objects.get_or_create(
+                    **observers_data
+                )
+                target.observers.add(observer)
+            return True
+        return False
+
+    def create(self, validated_data):
+        # telescope_data = validated_data.pop('telescope') 
+        target = Target.objects.create(**validated_data)
+        self.add_colorfilters(target, validated_data)
+        self.add_observers(target, validated_data)
 
         return target
 
