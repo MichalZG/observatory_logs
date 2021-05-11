@@ -38,7 +38,7 @@ class NightAdmin(admin.ModelAdmin):
         targets = obj.target_set.all()
         if targets:
             observers = list(set(
-                targets.values_list('observer', flat=True).distinct()
+                targets.values_list('observers', flat=True).distinct()
             ))
             return '; '.join(observers)
         return None
@@ -93,7 +93,7 @@ class TargetResource(resources.ModelResource):
 
     class Meta:
         model = Target
-        fields = ('datetime_start', 'datetime_end', 'jd_start', 'observer',
+        fields = ('datetime_start', 'datetime_end', 'jd_start', 'observers',
                   'name', 'telescope', 'res_program', 'res_colorfilters', 
                   'res_tags', 'res_total_exposure_time', 'number_of_frames')
         export_order = fields
@@ -142,13 +142,16 @@ class TargetAdmin(ExportActionMixin, admin.ModelAdmin):
             return round(obj.total_exposure_time / 60)
         return obj.total_exposure_time
 
-    list_display = ('name', 'datetime_start', 'jd_start', 'observer',
+    def observers_list(self, obj):
+        return ', '.join([f.name for f in obj.observers.all()])
+
+    list_display = ('name', 'datetime_start', 'jd_start', 'observers_list',
         'colorfilters_display', 'program', 'telescope', 
         'total_exposure_time_display', 'note_display', 'tags_display')
 
     list_editable = ('program',)
     list_filter = (
-        'program', 'tags', 'observer', 'colorfilters',
+        'program', 'tags', 'observers', 'colorfilters',
         'telescope', ('datetime_start', DateRangeFilter)
     )
 
@@ -156,18 +159,20 @@ class TargetAdmin(ExportActionMixin, admin.ModelAdmin):
     note_display.short_description = 'Note'
     colorfilters_display.short_description = 'Filters'
     tags_display.short_description = 'Tags'
+    observers_list.short_description = 'Observers'
 
     # formfield_overrides = {
     #     models.CharField: {'widget': TextInput(attrs={'size':'10'})},
-    #     models.TextField: {'widget': Textarea(attrs={'rows':4, 'cols':4})},
+    #     models.TextField: {'widget': Textarea(attrs={'rows':4, 'cols':2})},
     # }
-
+    readonly_fields = ['observers_list',]
     fieldsets = (
         (None, {
             'classes': ('extrapretty',),
             'fields': (('datetime_start', 'datetime_end'), 'name', 'program', 'telescope',
-                        'total_exposure_time', 
-                        'observer', ('colorfilters', 'tags'), 'note')
+                        'observers_list',
+                        ('total_exposure_time', 'ccd_temp_min', 'ccd_temp_max'),
+                        ('colorfilters', 'tags', 'observers'), 'exp_note', 'note')
         }),
     )
 
@@ -190,6 +195,6 @@ class TagAdmin(admin.ModelAdmin):
 # admin.site.register(Target, TargetAdmin)
 # admin.site.register(Tag)
 admin.site.register(Telescope)
-# admin.site.register(Observer)
+admin.site.register(Observer)
 admin.site.register(ColorFilter)
 admin.site.register(Program)

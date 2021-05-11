@@ -28,13 +28,15 @@ class Target(models.Model):
         max_digits=13, decimal_places=6, verbose_name='JD', blank=True)
     night = models.ForeignKey('objects_log.Night',
         blank=True, on_delete=models.CASCADE)
-    observer = models.CharField(max_length=254, null=True, blank=True)
+    # observer = models.CharField(max_length=254, null=True, blank=True)
+    observers = models.ManyToManyField('objects_log.Observer', blank=True) 
     name = models.CharField(max_length=257)
     ra = models.DecimalField(max_digits=12, decimal_places=10,
         null=True, blank=True, help_text='RA in decimal hours')
     dec = models.DecimalField(max_digits=12, decimal_places=10,
         null=True, blank=True, help_text='DEC in decimal degree')
     note = models.TextField(max_length=511, null=True, blank=True, default='')
+    exp_note = models.TextField(max_length=257, null=True, blank=True, default='')
     telescope = models.ForeignKey('objects_log.Telescope',
         on_delete=models.PROTECT)
     program = models.ForeignKey('objects_log.Program', null=True, 
@@ -44,6 +46,8 @@ class Target(models.Model):
     total_exposure_time = models.DecimalField(max_digits=7, decimal_places=2,
         null=True, blank=True, help_text='Total exposure time in seconds')
     number_of_frames = models.IntegerField(blank=True, null=True)
+    ccd_temp_min = models.IntegerField(blank=True, null=True)
+    ccd_temp_max = models.IntegerField(blank=True, null=True)
 
     class Meta:
         ordering = ('-datetime_start',)
@@ -88,7 +92,7 @@ class Target(models.Model):
 
 
 class Observer(models.Model):
-    name = models.CharField(max_length=257, unique=True)
+    name = models.CharField(max_length=5, unique=True)
     note = models.TextField(max_length=511, null=True, blank=True)
 
     def __str__(self):
