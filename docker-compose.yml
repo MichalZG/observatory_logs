@@ -16,10 +16,10 @@ services:
     volumes:
       - .:/code
     restart: always
-    command: python manage.py runserver 0.0.0.0:8000 --insecure
+    command: python manage.py runserver 0.0.0.0:8000 
     
     
-networks: 
-  default:
-    external:
-      name: postgres_default
+#networks: 
+#  default:
+#    external:
+#      name: postgres_default

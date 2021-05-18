@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
+import datetime as dt 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -160,7 +161,8 @@ LOGGING = {
     'handlers': {
         'file': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(PROJECT_ROOT, 'debug.log'),
+            # 'filename': os.path.join(PROJECT_ROOT, 'debug.log'),
+            'filename': f'/tmp/suhora_logs_debug_{dt.datetime.now().strftime("%Y%m%dT%H%M%S")}.log',
             'formatter': 'simple',
         },
         'console': {
