@@ -38,9 +38,9 @@ class NightAdmin(admin.ModelAdmin):
         targets = obj.target_set.all()
         if targets:
             observers = list(set(
-                targets.values_list('observers', flat=True).distinct()
+                targets.values_list('observers__name', flat=True).distinct()
             ))
-            return '; '.join(observers)
+            return ', '.join(observers)
         return None
 
     def on_target_display(self, obj):
