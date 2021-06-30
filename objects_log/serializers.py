@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from objects_log.models import Target, ColorFilter, Telescope
+from objects_log.models import Observer, Target, ColorFilter, Telescope
 from django.utils import timezone
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -15,6 +15,7 @@ class ColorFilterSerializer(serializers.ModelSerializer):
             'name': {'validators': []},
         }
 
+
 class TelescopeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Telescope
@@ -23,6 +24,16 @@ class TelescopeSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'name': {'validators': []},
         }
+
+
+class ObserverSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Observer
+        fields = ('name', )
+        extra_kwargs = {
+            'name': {'validators': []},
+        }
+
 
 class TargetSerializer(serializers.ModelSerializer):
     telescope = serializers.SlugRelatedField(
@@ -34,10 +45,11 @@ class TargetSerializer(serializers.ModelSerializer):
     # )
     # telescope = TelescopeSerializer(many=False)
     colorfilters = ColorFilterSerializer(many=True)
+    observers = ObserverSerializer(many=True)
 
     class Meta:
         model = Target
-        fields = ['datetime_start', 'datetime_end', 'observer', 'name',
+        fields = ['datetime_start', 'datetime_end', 'observers', 'name',
             'ra', 'dec', 'note', 'telescope', 'colorfilters',
             'total_exposure_time', 'number_of_frames',]
         validators = [
@@ -48,10 +60,9 @@ class TargetSerializer(serializers.ModelSerializer):
         ]
 
     
-    def add_colorfilters(target, validated_data):
-        colorfilters_data = validated_data.pop('colorfilters')
-        if colorfilters_data:
-            for c_filter_data in colorfilters_data:
+    def add_colorfilters(self, target, data):
+        if data:
+            for c_filter_data in data:
                 c_filter, _ = ColorFilter.objects.get_or_create(
                     **c_filter_data
                 )
@@ -59,12 +70,11 @@ class TargetSerializer(serializers.ModelSerializer):
             return True
         return False
 
-    def add_observers(target, validated_data):
-        observers_data = validated_data.pop('observers')
-        if observers_data:
-            for o_data in observers_data:
+    def add_observers(self, target, data):
+        if data:
+            for o_data in data:
                 observer, _ = Observer.objects.get_or_create(
-                    **observers_data
+                    **o_data
                 )
                 target.observers.add(observer)
             return True
@@ -72,11 +82,16 @@ class TargetSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # telescope_data = validated_data.pop('telescope') 
+        colorfilters_data = validated_data.pop('colorfilters')
+        observers_data = validated_data.pop('observers')
+
         target = Target.objects.create(**validated_data)
-        self.add_colorfilters(target, validated_data)
-        self.add_observers(target, validated_data)
+
+        self.add_colorfilters(target, colorfilters_data)
+        self.add_observers(target, observers_data)
 
         return target
+
 
 class TargetStatsSerializer(serializers.BaseSerializer):
     def to_representation(self, instance):
