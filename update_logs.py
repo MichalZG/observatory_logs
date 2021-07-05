@@ -1,3 +1,9 @@
+#######################
+# Template script for update logs
+# Created for T60 telescope
+#######################
+
+
 import os
 import astropy.io.fits as fits
 import datetime as dt
@@ -10,8 +16,43 @@ import requests
 import json
 import dateutil.parser as dateparser
 import csv 
+import logging
+from dotenv import dotenv_values
 
-from update_config import *
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+config = dotenv_values(".env")
+
+ALLOWED_EXT = ['.gz', '.bz2', '.fit', '.fits']
+FORBIDDEN_KEYS = ['HISTORY', 'COMMENT']
+DATE_REGEX = '^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$'
+
+
+def check_in_dict(_dict, _name):
+    _name = _name.strip()
+    _name_up = _name.upper()
+    if _name in _dict.keys():
+        return _name
+    elif _name_up in _dict.keys():
+        return _name_up
+    else:
+        for header, body in _dict.items():
+            if _name_up in body: return header
+    return _name
+
+
+def read_dict(_file):
+    _dict = {}
+    with open(_file) as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            row = [x for x in row if x]
+            if not row: continue
+            header = row[0]
+            body = set([x.upper() for x in row[1:]])
+            _dict[header] = body
+    return _dict
 
 
 def get_dirs_to_walk(data_dir, datetime_start, datetime_end):
@@ -35,6 +76,7 @@ def get_dirs_to_walk(data_dir, datetime_start, datetime_end):
             dirs_to_walk.append(os.path.join(data_dir, _d))
     return dirs_to_walk
 
+
 def get_files(_dir):
     
     files_in_folder = []
@@ -51,7 +93,7 @@ def get_files(_dir):
     return files_to_open
 
 
-def get_folder_data(files_to_open, names_dict):
+def get_folder_data(files_to_open, names_dict, filters_dict, observers_dict):
     folder_data = []
     logger.debug(files_to_open)
     for f in files_to_open:
@@ -73,20 +115,20 @@ def get_folder_data(files_to_open, names_dict):
                     hdr['DATE-OBS'] + 'T' + hdr['TIME-OBS'],
                     '%Y-%m-%dT%H:%M:%S.%f').isoformat()
                 
-                object_name = hdr['OBJECT']
-                if names_dict:
-                    correct_name = [
-                        k for k, v in names_dict.items() if object_name in v
-                    ]
-                    object_name = correct_name[0] if correct_name else object_name
-                observer = hdr['OBSERVER']
-                color_filter = hdr['FILTER']
+                object_name = check_in_dict(names_dict, hdr['OBJECT'])
+                observers = [
+                    check_in_dict(observers_dict, observer) for observer in hdr['OBSERVER'].strip().split()
+                ]
+                observers = [
+                    {'name': observer} for observer in observers
+                ]
+                color_filter = check_in_dict(filters_dict, hdr['FILTER'])
                 exptime = hdr['EXPTIME']
                 
             row = {
                 'obs_datetime': obs_datetime,
                 'object_name': object_name,
-                'observer': observer,
+                'observers': observers,
                 'color_filter': color_filter,
                 'exptime': exptime,
             }
@@ -100,17 +142,13 @@ def get_folder_data(files_to_open, names_dict):
 
 def get_grouped_folder_data(folder_data, telescope_name):
     results = {}
-    target = {}
-    n_frames = 0
-    prev_name = None
-
     for frame in folder_data:
         object_name = str(frame['object_name']).strip()
         if object_name not in results:
             object_dict = {
                 'name': object_name,
                 'datetime_start': frame['obs_datetime'],
-                'observer': frame['observer'],
+                'observers': frame['observers'],
                 'colorfilters': [],
                 'total_exposure_time': 0,
                 'number_of_frames': 0,
@@ -141,9 +179,13 @@ def send_data(data_to_send):
             try:
                 logger.debug(f'Sending data: {target_data}')
                 response = requests.post(
-                    UPLOAD_URL, auth=(DB_USER, DB_PASSWORD),
-                        data=json.dumps(target_data),
-                        headers={'content-type': 'application/json'})
+                    url=config['UPLOAD_URL'],
+                    auth=(
+                        config['REST_USER'],
+                        config['REST_PASSWORD']
+                        ),
+                    data=json.dumps(target_data),
+                    headers={'content-type': 'application/json'})
             except (requests.ConnectionError, requests.Timeout) as e:
                 logger.error(f'No DB connection - {e}')
                 raise Exception(f'No connection to DB! - {e}')
@@ -154,10 +196,15 @@ def send_data(data_to_send):
 
 def get_info_from_db(args):
     try:
-        telescope_url = STATS_URL + args.telescope_name
-        response = requests.get(telescope_url, timeout=TIMEOUT,
-                                auth=(DB_USER, DB_PASSWORD),
-                    headers={'content-type': 'application/json'})
+        telescope_url = config['TELESCOPE_STATS_URL'] + args.telescope_name
+        response = requests.get(
+            url=telescope_url,
+            timeout=float(config.get('TIMEOUT', 10)),
+            auth=(
+                config['REST_USER'],
+                config['REST_PASSWORD']
+                ),
+            headers={'content-type': 'application/json'})
         logger.info('DB connection ready')
     except (requests.ConnectionError, requests.Timeout) as exception:
         logger.error('No DB connection')
@@ -183,22 +230,15 @@ def validate_data_dir(data_dir):
         raise Exception('Wrong data dir')
     return data_dir
 
-def validate_names_file(names_path):
-    if not os.path.isfile(names_path):
-        logger.error('Wrong names file')
-        raise Exception('Wrong names file')
-    names_dict = {}
-    try:
-        with open(names_path) as f:
-            _reader = csv.reader(f)
-            for row in _reader:
-                names_dict[row[0]] = row[1:]
-    except Exception as e:
-        logger.error(f'Wrong names file {e}')
-        raise Exception(f'Wrong names file - {e}')
-    return names_dict
+def validate_dict_file(dict_file):
+    if not os.path.isfile(dict_file):
+        logger.error(f'No dict file: {dict_file}')
+        return False
+    return True
 
-def process(data_dir, names_dict, datetime_start, datetime_end, telescope_name):
+def process(
+    data_dir, datetime_start, datetime_end,
+    telescope_name, names_dict, filters_dict, observers_dict):
     dirs_to_walk = sorted(
         get_dirs_to_walk(data_dir, datetime_start, datetime_end)
     )
@@ -208,7 +248,9 @@ def process(data_dir, names_dict, datetime_start, datetime_end, telescope_name):
         data_to_send = []
 
         folder_files = get_files(_dir)
-        folder_data = get_folder_data(folder_files, names_dict)
+        folder_data = get_folder_data(
+            folder_files, names_dict, filters_dict, observers_dict
+        )
         grouped_folder_data = get_grouped_folder_data(
             folder_data, telescope_name
         )
@@ -227,8 +269,16 @@ if __name__ == '__main__':
         help="Data directory for telescope"
     )
     parser.add_argument(
-        "-n", "--names_path", type=str, nargs='?', const='',
+        "-nd", "--names_dict", type=str, nargs='?', const='',
         help="Path to csv file with names dictionary"
+    )       
+    parser.add_argument(
+        "-fd", "--filters_dict", type=str, nargs='?', const='',
+        help="Path to csv file with color filters dictionary"
+    )       
+    parser.add_argument(
+        "-od", "--observers_dict", type=str, nargs='?', const='',
+        help="Path to csv file with observers dictionary"
     )       
     parser.add_argument(
         "-s", "--datetime_start", type=str, nargs='?', const='',
@@ -251,31 +301,41 @@ if __name__ == '__main__':
         if db_info['last_datetime']:
             datetime_start = db_info['last_datetime']
         else:
-            datetime_start = ZERO_DATETIME
+            datetime_start = config.get('ZERO_DATETIME', '1900-01-01T12:00:00')
     datetime_start_parsed = validate_datetime(datetime_start)
 
     if args.datetime_end:
         datetime_end = args.datetime_end
     else:
-        datetime_end = INF_DATETIME
+        datetime_end = config.get('INF_DATETIME', '2100-01-01T12:00:00')
     datetime_end_parsed = validate_datetime(datetime_end)
 
     data_dir = validate_data_dir(args.data_dir)
 
-    if args.names_path:
-        names_dict = validate_names_file(args.names_path)
-    else:
-        names_dict = None
+    names_dict = {}
+    if args.names_dict:
+        if validate_dict_file(args.names_dict):
+            names_dict = read_dict(args.names_dict)
+
+    filters_dict = {}
+    if args.filters_dict:
+        if validate_dict_file(args.filters_dict):
+            names_dict = read_dict(args.filters_dict)
+
+    observers_dict = {}
+    if args.observers_dict:
+        if validate_dict_file(args.observers_dict):
+            observers_dict = read_dict(args.observers_dict)
 
     print('Process start')
     logger.info(f'Process start - {dt.datetime.now().isoformat()}')
     try:
         process(
             data_dir,
-            names_dict,
             datetime_start_parsed,
             datetime_end_parsed,
             args.telescope_name,
+            names_dict, filters_dict, observers_dict
         )
         logger.info(f'Finished')
     except Exception as e:

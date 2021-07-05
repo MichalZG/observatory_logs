@@ -163,7 +163,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             # 'filename': os.path.join(PROJECT_ROOT, 'debug.log'),
             # 'filename': f'/tmp/suhora_logs_debug_{dt.datetime.now().strftime("%Y%m%dT%H%M%S")}.log',
-            'filename': f'/tmp/debug.log',
+            'filename': f'/tmp/suhora_debug.log',
             'formatter': 'simple',
         },
         'console': {

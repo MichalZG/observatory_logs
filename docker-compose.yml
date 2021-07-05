@@ -13,8 +13,10 @@ services:
       - DB_PASSWORD
       - DB_HOST
       - DB_PORT
+      - DJANGO_LOG_LEVEL
     volumes:
       - .:/code
+      - /tmp/:/tmp/
     restart: always
     command: python manage.py runserver 0.0.0.0:8000 
     

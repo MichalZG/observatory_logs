@@ -2,6 +2,10 @@ from rest_framework import serializers
 from objects_log.models import Observer, Target, ColorFilter, Telescope
 from django.utils import timezone
 from rest_framework.validators import UniqueTogetherValidator
+import logging
+
+logger = logging.getLogger('django')
+
 
 def auto_end_datetime():
     return timezone.now() + timezone.timedelta(hours=1)
@@ -90,6 +94,9 @@ class TargetSerializer(serializers.ModelSerializer):
         self.add_colorfilters(target, colorfilters_data)
         self.add_observers(target, observers_data)
 
+        logger.info(
+            f'\nCreated object ***{target.name}***,\n\
+            nframes: {target.number_of_frames}, night: {target.night}')        
         return target
 
 
