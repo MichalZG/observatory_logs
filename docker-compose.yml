@@ -3,22 +3,16 @@ version: "3.3"
 services:
   web:
     build: .
-    ports:
-      - "${WEB_PORT}:8000"
-    environment:
-      - DEBUG
-      - SECRET_KEY
-      - DB_NAME
-      - DB_USER
-      - DB_PASSWORD
-      - DB_HOST
-      - DB_PORT
-      - DJANGO_LOG_LEVEL
+      #ports:
+      # - "${WEB_PORT}:8000"
+    env_file:
+      - config.env
     volumes:
       - .:/code
       - /tmp/:/tmp/
     restart: always
     command: python manage.py runserver 0.0.0.0:8000 
+    network_mode: "host"
     
     
 #networks: 
