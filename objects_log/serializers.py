@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from objects_log.models import Observer, Target, ColorFilter, Telescope
+from objects_log.models import Observer, Target, ColorFilter, Telescope, Program
 from django.utils import timezone
 from rest_framework.validators import UniqueTogetherValidator
 import logging
@@ -38,6 +38,14 @@ class ObserverSerializer(serializers.ModelSerializer):
             'name': {'validators': []},
         }
 
+class ProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Program
+        fields = ('name', )
+        extra_kwargs = {
+            'name': {'validators': []},
+        }
+
 
 class TargetSerializer(serializers.ModelSerializer):
     telescope = serializers.SlugRelatedField(
@@ -50,12 +58,13 @@ class TargetSerializer(serializers.ModelSerializer):
     # telescope = TelescopeSerializer(many=False)
     colorfilters = ColorFilterSerializer(many=True)
     observers = ObserverSerializer(many=True)
+    program = ProgramSerializer()
 
     class Meta:
         model = Target
         fields = ['datetime_start', 'datetime_end', 'observers', 'name',
             'ra', 'dec', 'note', 'telescope', 'colorfilters',
-            'total_exposure_time', 'number_of_frames',]
+            'total_exposure_time', 'number_of_frames', 'program',]
         validators = [
             UniqueTogetherValidator(
                 queryset=Target.objects.all(),
@@ -83,16 +92,31 @@ class TargetSerializer(serializers.ModelSerializer):
                 target.observers.add(observer)
             return True
         return False
+    
+
+    def add_program(self, target, data):
+        if data:
+            program, _ = Program.objects.get_or_create(
+                **data
+            )
+            target.program = program
+            target.save()
+            return True
+        target.program = program
+        return False
+
 
     def create(self, validated_data):
         # telescope_data = validated_data.pop('telescope') 
         colorfilters_data = validated_data.pop('colorfilters')
         observers_data = validated_data.pop('observers')
+        program_data = validated_data.pop('program')
 
         target = Target.objects.create(**validated_data)
 
         self.add_colorfilters(target, colorfilters_data)
         self.add_observers(target, observers_data)
+        self.add_program(target, program_data)
 
         logger.info(
             f'\nCreated object ***{target.name}***,\n\
