@@ -28,6 +28,7 @@ ALLOWED_EXT = ['.gz', '.bz2', '.fit', '.fits']
 FORBIDDEN_KEYS = ['HISTORY', 'COMMENT']
 DATE_REGEX = '^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$'
 
+DEFAULT_OBSERVER = 'ROTUZ'
 
 def check_in_dict(_dict, _name):
     _name = _name.strip()
@@ -69,6 +70,7 @@ def get_dirs_to_walk(data_dir, datetime_start, datetime_end):
     p = re.compile(DATE_REGEX) 
     
     dirs_to_walk = []
+    print(date_start, date_end)
     for _d in os.listdir(data_dir):
         if (p.match(_d) and \
             date_end >= dt.datetime.strptime(_d, '%Y-%m-%d').date() >= date_start
@@ -112,12 +114,16 @@ def get_folder_data(files_to_open, names_dict, filters_dict, observers_dict):
                     continue
 
                 obs_datetime = dt.datetime.strptime(
-                    hdr['DATE-OBS'] + 'T' + hdr['TIME-OBS'],
-                    '%Y-%m-%dT%H:%M:%S.%f').isoformat()
+                    hdr['DATE-OBS'], '%Y-%m-%dT%H:%M:%S.%f').isoformat()
                 
-                object_name = check_in_dict(names_dict, hdr['OBJECT'])
+                object_name = hdr.get('OBJECT', hdr.get('IMAGETYP', 'UNKNOWN'))
+                object_name = object_name.strip().replace(' ', '')
+                object_name = check_in_dict(names_dict, object_name)
+
+                observer = hdr.get('OBSERVER', DEFAULT_OBSERVER)
+
                 observers = [
-                    check_in_dict(observers_dict, observer) for observer in hdr['OBSERVER'].strip().split()
+                    check_in_dict(observers_dict, observer) for observer in observer.strip().split()
                 ]
                 observers = [
                     {'name': observer} for observer in observers
@@ -147,6 +153,7 @@ def get_grouped_folder_data(folder_data, telescope_name):
         if object_name not in results:
             object_dict = {
                 'name': object_name,
+                'program': {'name': 'NA'},
                 'datetime_start': frame['obs_datetime'],
                 'observers': frame['observers'],
                 'colorfilters': [],
